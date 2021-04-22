@@ -102,4 +102,7 @@ void Tachometer_Get(uint16_t *leftTach, enum TachDirection *leftDir, int32_t *le
 
 uint16_t Get_Speed( uint16_t * Tach, int Tachbuff);
 
+double get_velocity_left();
+double get_velocity_right();
+
 #endif /* TACHOMETER_H_ */

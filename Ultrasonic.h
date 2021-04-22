@@ -22,4 +22,10 @@ void LPF_Init(uint32_t oldData, uint32_t size);
 
 uint32_t LPF_Calc(uint32_t newData);
 
+uint32_t readLeft();
+
+uint32_t readCenter();
+
+uint32_t readRight();
+
 #endif /* ULTRASONIC_H_ */

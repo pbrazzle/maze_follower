@@ -9,6 +9,21 @@
 #include "..\inc\Clock.h"
 
 void Ultrasonic_Init(void){
+    //Right sensor
+    //P8.7 trigger 8.4 echo
+    P8->DIR |= 0x80;
+    P8->DIR &= ~0x10;
+
+    //Center sensor
+    //P8.0 echo 7.5 trigger
+    P8->DIR &= ~0x01;
+    P7->DIR |= 0x20;
+
+    //Left sensor
+    //P10.0 trigger 10.1 echo
+    P10->DIR |= 0x01;
+    P10->DIR &= ~0x02;
+
     P6->DIR &= ~BIT7;
     P8->DIR &= ~BIT0;
     P10->DIR &= ~BIT5;
@@ -101,4 +116,70 @@ uint32_t LPF_Calc(uint32_t newData){
     LPFCalc = sum/sz;
 
     return LPFCalc;
+}
+
+uint32_t readLeft()
+{
+    //Send pulse
+    P10->OUT |= 0x01;
+    Clock_Delay1us(10);
+    P10->OUT &= ~0x01;
+
+    //Wait for echo in
+    uint8_t result = P10->IN & 0x02;
+    while (result == 0) result = P10->IN & 0x02;
+
+    //Wait for echo to finish
+    uint32_t duration = 0;
+    while (result != 0)
+    {
+        duration++;
+        result = P10->IN & 0x02;
+    }
+
+    return duration;
+}
+
+uint32_t readCenter()
+{
+    //Send pulse
+    P7->OUT |= 0x20;
+    Clock_Delay1us(10);
+    P7->OUT &= ~0x20;
+
+    //Wait for echo in
+    uint8_t result = P8->IN & 0x01;
+    while (result == 0) result = P8->IN & 0x01;
+
+    //Wait for echo to finish
+    uint32_t duration = 0;
+    while (result != 0)
+    {
+        duration++;
+        result = P8->IN & 0x01;
+    }
+
+    return duration;
+}
+
+uint32_t readRight()
+{
+    //Send pulse
+    P10->OUT |= 0x01;
+    Clock_Delay1us(10);
+    P10->OUT &= ~0x01;
+
+    //Wait for echo in
+    uint8_t result = P10->IN & 0x02;
+    while (result == 0) result = P10->IN & 0x02;
+
+    //Wait for echo to finish
+    uint32_t duration = 0;
+    while (result != 0 && duration < 3000)
+    {
+        duration++;
+        result = P10->IN & 0x02;
+    }
+
+    return duration;
 }

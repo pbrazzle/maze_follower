@@ -69,7 +69,7 @@ uint16_t avg(uint16_t *array, int length){
   int i;
   uint32_t sum = 0;
   for(i=0; i<length; i=i+1){
-    sum = sum + array[i];
+    sum += array[i];
   }
   return (sum/length);
 }
@@ -145,4 +145,17 @@ uint16_t Get_Speed( uint16_t * Tach, int Tachbuff)
 {
         // (1/tach step/cycles) * (12,000,000 cycles/sec) * (60 sec/min) * (1/360 rotation/step)
         return (2000000/avg(Tach, Tachbuff));
-}         
+}
+
+double get_velocity_left()
+{
+    return (Tachometer_SecondLeftTime - Tachometer_FirstLeftTime) * 0.083 * 0.001 * 18 / 11;
+}
+
+double get_velocity_right()
+{
+    return (Tachometer_SecondRightTime - Tachometer_FirstRightTime) * 0.083 * 0.001 * 18 / 11;
+}
+
+
+
