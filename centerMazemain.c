@@ -134,8 +134,7 @@ void SysTick_Handler(void){ // runs at 100 Hz
 // Lab 17 solution with proportional control, distance to wall
 // Enumerated parameter "NONE", "LCD", "UART" or "OLED"
 // Runs on MSP432
-void main17(enum outputtype outputType){//mainProportialControl(void){
-  uint32_t raw17,raw14,raw16;
+void main(enum outputtype outputType){//mainProportialControl(void){
   OutputType17 = outputType;
   DisableInterrupts();
   Clock_Init48MHz();
