@@ -41,7 +41,6 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include <stdio.h>
 #include "msp.h"
 #include "blinker.h"
-#include "OutputType.h"
 #include "../inc/Clock.h"
 #include "../inc/CortexM.h"
 #include "../inc/PWM.h"
@@ -55,15 +54,12 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include "../inc/MotorSimple.h"
 #include "../inc/Tachometer.h"
 #include "../inc/TimerA1.h"
-#include "../inc/IRDistance.h"
 #include "../inc/TA3InputCapture.h"
-#include "../inc/LPF.h"
 #include "../inc/SysTickInts.h"
 #include "../inc/ADC14.h"
 #include "../inc/SSD1306.h"
 #include "Ultrasonic.h"
 
-static enum outputtype OutputType17 = UART;
 
 //******************************************************
 
@@ -134,8 +130,7 @@ void SysTick_Handler(void){ // runs at 100 Hz
 // Lab 17 solution with proportional control, distance to wall
 // Enumerated parameter "NONE", "LCD", "UART" or "OLED"
 // Runs on MSP432
-void main(enum outputtype outputType){//mainProportialControl(void){
-  OutputType17 = outputType;
+void main(){//mainProportialControl(void){
   DisableInterrupts();
   Clock_Init48MHz();
   LaunchPad_Init(); // built-in switches and LEDs
