@@ -165,20 +165,20 @@ uint32_t readCenter()
 uint32_t readRight()
 {
     //Send pulse
-    P10->OUT |= 0x01;
+    P8->OUT |= 0x80;
     Clock_Delay1us(10);
-    P10->OUT &= ~0x01;
+    P8->OUT &= ~0x80;
 
     //Wait for echo in
-    uint8_t result = P10->IN & 0x02;
-    while (result == 0) result = P10->IN & 0x02;
+    uint8_t result = P8->IN & 0x10;
+    while (result == 0) result = P8->IN & 0x10;
 
     //Wait for echo to finish
     uint32_t duration = 0;
     while (result != 0 && duration < 3000)
     {
         duration++;
-        result = P10->IN & 0x02;
+        result = P8->IN & 0x10;
     }
 
     return duration;
