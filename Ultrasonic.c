@@ -6,7 +6,9 @@
  */
 #include <stdint.h>
 #include "msp432.h"
-#include "..\inc\Clock.h"
+#include "../inc/Clock.h"
+#include "../inc/CortexM.h"
+#include "Ultrasonic.h"
 
 void Ultrasonic_Init(void){
     //Right sensor
@@ -120,6 +122,8 @@ uint32_t LPF_Calc(uint32_t newData){
 
 uint32_t readLeft()
 {
+    DisableInterrupts();
+    uint32_t to=0;
     //Send pulse
     P10->OUT |= 0x01;
     Clock_Delay1us(10);
@@ -127,7 +131,11 @@ uint32_t readLeft()
 
     //Wait for echo in
     uint8_t result = P10->IN & 0x02;
-    while (result == 0) result = P10->IN & 0x02;
+    while (result == 0 && to != 10000)
+    {
+        result = P10->IN & 0x02;
+        to++;
+    }
 
     //Wait for echo to finish
     uint32_t duration = 0;
@@ -136,12 +144,14 @@ uint32_t readLeft()
         duration++;
         result = P10->IN & 0x02;
     }
-
+    EnableInterrupts();
     return duration;
 }
 
 uint32_t readCenter()
 {
+    DisableInterrupts();
+    uint32_t to=0;
     //Send pulse
     P7->OUT |= 0x20;
     Clock_Delay1us(10);
@@ -149,7 +159,11 @@ uint32_t readCenter()
 
     //Wait for echo in
     uint8_t result = P8->IN & 0x01;
-    while (result == 0) result = P8->IN & 0x01;
+    while (result == 0 && to != 10000)
+       {
+           result = P8->IN & 0x01;
+           to++;
+       }
 
     //Wait for echo to finish
     uint32_t duration = 0;
@@ -158,12 +172,14 @@ uint32_t readCenter()
         duration++;
         result = P8->IN & 0x01;
     }
-
+    EnableInterrupts();
     return duration;
 }
 
 uint32_t readRight()
 {
+    DisableInterrupts();
+    uint32_t to=0;
     //Send pulse
     P8->OUT |= 0x80;
     Clock_Delay1us(10);
@@ -171,7 +187,11 @@ uint32_t readRight()
 
     //Wait for echo in
     uint8_t result = P8->IN & 0x10;
-    while (result == 0) result = P8->IN & 0x10;
+    while (result == 0 && to != 10000)
+    {
+        result = P8->IN & 0x10;
+        to++;
+    }
 
     //Wait for echo to finish
     uint32_t duration = 0;
@@ -180,6 +200,6 @@ uint32_t readRight()
         duration++;
         result = P8->IN & 0x10;
     }
-
+    EnableInterrupts();
     return duration;
 }
