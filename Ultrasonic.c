@@ -131,7 +131,7 @@ uint32_t readLeft()
 
     //Wait for echo in
     uint8_t result = P10->IN & 0x02;
-    while (result == 0 && to != 10000)
+    while (result == 0 && to != 100000)
     {
         result = P10->IN & 0x02;
         to++;
@@ -159,7 +159,7 @@ uint32_t readCenter()
 
     //Wait for echo in
     uint8_t result = P8->IN & 0x01;
-    while (result == 0 && to != 10000)
+    while (result == 0 && to != 100000)
        {
            result = P8->IN & 0x01;
            to++;
@@ -187,7 +187,7 @@ uint32_t readRight()
 
     //Wait for echo in
     uint8_t result = P8->IN & 0x10;
-    while (result == 0 && to != 10000)
+    while (result == 0 && to != 100000)
     {
         result = P8->IN & 0x10;
         to++;
@@ -203,3 +203,4 @@ uint32_t readRight()
     EnableInterrupts();
     return duration;
 }
+
