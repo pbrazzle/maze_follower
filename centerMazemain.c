@@ -115,8 +115,8 @@ void main(){//mainProportialControl(void){
   Motor_Start();
   while(1)
   {
-     Left17 = readLeft() * 0.000001 * 343;
-     Center17 = readCenter() * 0.000001 * 343;
-     Right17 = readRight() * 0.000001 * 343;
+     Left17 = readLeft() * 0.001 * 343;
+     Center17 = readCenter() * 0.001 * 343;
+     Right17 = readRight() * 0.001 * 343;
   }
 }
