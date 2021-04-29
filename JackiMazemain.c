@@ -89,9 +89,32 @@ void SysTick_Handler(void){ // every 1ms
 }
 
 /*********************************
+ *      FOUND LINES
+ *********************************/
+void Lines_Found(void){
+    
+    if(reading!=0 && reading!=255) {
+    MazeStop();
+    LaunchPad_Output(BLUE);
+        while(1){  
+        LaunchPad_LED(1);
+        Clock_Delay1us(50000);
+        LaunchPad_LED(0);
+        Clock_Delay1us(50000);
+        }
+    }        
+} 
+/*********************************
  *      ULTRASONIC SENSORS
  *********************************/
+<<<<<<< HEAD
 double Left_mm,Right_mm,Center_mm; // IR distances in mm
+=======
+uint32_t Left_mm,Right_mm,Center_mm; // IR distances in mm
+#define OPEN_DIST_L 250
+#define OPEN_DIST_R 250
+#define OPEN_DIST_C 250
+>>>>>>> 6274af54af6b3dc89756480c3a38ed20ae408776
 void PingUltrasonicSensors() {
     Left_mm = readLeft() * 0.001 * 343;
     Right_mm = readRight() * 0.001 * 343;
