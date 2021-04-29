@@ -31,18 +31,18 @@
 #include "../inc/PWM.h"
 #include "../inc/Reflectance.h"
 #include "../inc/SysTickInts.h"
-#include "../inc/Tachometer.h"
-#include "../inc/TA3InputCapture.h"
+#include "Tachometer.h"
 #include "../inc/TExaS.h"
 #include "../inc/TimerA1.h"
 #include "../inc/UART0.h"
 #include "Ultrasonic.h"
 
-float globalSpeed = 0.40;
+float globalSpeed = 0.10;
 
 uint8_t buffer[256*2]; //Debug buffer
 
 uint8_t controlState;
+uint8_t controlTurn;
 uint8_t bumpSensorData;
 uint8_t reading;
 
@@ -52,10 +52,12 @@ uint8_t reading;
 void StartMaze(void) {
     LaunchPad_Output(GREEN);
     Motor_Start();
+    controlState = 0x01;
 }
 void StopMaze(void) {
     LaunchPad_Output(RED);
     Motor_Stop();
+    controlState = 0x00;
 }
 
 /*********************************
@@ -88,13 +90,13 @@ void SysTick_Handler(void){ // every 1ms
  *      ULTRASONIC SENSORS
  *********************************/
 double Left_mm,Right_mm,Center_mm; // IR distances in mm
-#define OPEN_DIST_L 1000
-#define OPEN_DIST_R 1000
-#define OPEN_DIST_C 1000
+#define OPEN_DIST_L 250
+#define OPEN_DIST_R 250
+#define OPEN_DIST_C 250
 void PingUltrasonicSensors() {
     Left_mm = readLeft() * 0.001 * 343;
-    Center_mm = readCenter() * 0.001 * 343;
     Right_mm = readRight() * 0.001 * 343;
+    Center_mm = readCenter() * 0.001 * 343;
 }
 
 /*********************************
@@ -180,7 +182,7 @@ int16_t PWMnominal=2500;
 #define SWING 1000
 #define PWMMIN (PWMnominal-SWING)
 #define PWMMAX (PWMnominal+SWING)
-void PWM_Motor_Drive(void){ // runs at 100 Hz
+void PID_Motor_Drive(void){ // runs at 100 Hz
     if((Left_mm>DESIRED)&&(Right_mm>DESIRED)){
       SetPoint = (Left_mm+Right_mm)/2;
     }else{
@@ -208,27 +210,52 @@ void PWM_Motor_Drive(void){ // runs at 100 Hz
 void DriveController(void) {
     if(Right_mm > OPEN_DIST_R) {
         //Turn Right
+        controlTurn = 0x01;
+        //Forward 360
         Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
-        Motor_DutyRight(0);                     //Drive Right Motor
-        Clock_Delay1ms(10);     // wait
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(360);
+        //Pivot 90 Right
+        Motor_DutyLeft(-PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(PERIOD * globalSpeed); //Drive Right Motor
+        turnBoth(180);
+        //Forward 360
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(200);
+
     }
     else if(Center_mm > OPEN_DIST_C) {
         //Go Forward
-        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
-        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
-        Clock_Delay1ms(10);     // wait
+        controlTurn = 0x00;
+//        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+//        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+//        Clock_Delay1ms(10);     // wait
+        PID_Motor_Drive();
     }
     else if(Left_mm > OPEN_DIST_L) {
         //Turn Left
+        controlTurn = 0x02;
+        //Forward 360
         Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
-        Motor_DutyRight(0);                     //Drive Right Motor
-        Clock_Delay1ms(10);     // wait
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(360);
+        //Pivot 90 Left
+        Motor_DutyLeft(PERIOD * globalSpeed);  //Drive Left Motor
+        Motor_DutyRight(-PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(180);
+        //Forward 360
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(200);
     }
     else {
         //Turn Around
-        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
-        Motor_DutyRight(0);                     //Drive Right Motor
-        Clock_Delay1ms(10);     // wait
+        controlTurn = 0x03;
+        //Pivot 360 Right
+        Motor_DutyLeft(-PERIOD * globalSpeed);  //Drive Left Motor
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        turnBoth(360);
     }
 }
 
@@ -248,18 +275,12 @@ void main(void){
     Motor_Init(0,0);
     SysTick_Init(48000,2);
     BumpInt_Init(&HandleCollision);
+    Tachometer_Init();
     EnableInterrupts();
 
     BLE_Init();
 
     StopMaze();
-    while(LaunchPad_Input()==0) { // wait for touch
-        if(controlState == 1) break;
-        AP_BackgroundProcess();  // handle incoming SNP frames
-    };
-    while(LaunchPad_Input());     // wait for release
-    controlState = 0x01;
-    StartMaze();
 
     int bindex = 0;
     while(1){
@@ -279,6 +300,16 @@ void main(void){
                 bindex=0; // resets index when buffer is full
                 Debug_FlashRecord((uint16_t *) buffer); // puts buffer into ROM
             }
+        }
+        else {
+            while(LaunchPad_Input()==0) { // wait for touch
+                if(controlState == 1) break;
+                SendBluetoothData();
+                PingUltrasonicSensors();
+                AP_BackgroundProcess();  // handle incoming SNP frames
+            };
+            while(LaunchPad_Input());     // wait for release
+            StartMaze();
         }
     }
 
