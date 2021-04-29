@@ -195,7 +195,7 @@ uint32_t readRight()
 
     //Wait for echo to finish
     uint32_t duration = 0;
-    while (result != 0 && duration < 3000)
+    while (result != 0)
     {
         duration++;
         result = P8->IN & 0x10;
