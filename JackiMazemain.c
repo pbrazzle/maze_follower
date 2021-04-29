@@ -134,12 +134,33 @@ void BLE_Init(void){
     AP_GetStatus(); // optional
 }
 
+int time=0;
+void SendBluetoothData(void) {
+    AP_BackgroundProcess();  // handle incoming SNP frames
+    time++;
+
+    //Update Line Sensor Data Periodically
+    if(time>1000000){
+      time = 0;
+      if(AP_GetNotifyCCCD(1)) {
+          OutValue("\n\rNotify Line Sensor=",reading);
+          AP_SendNotification(1);
+      }
+    }
+    //Update Bump Sensor Data on Collision
+    if(bumpSensorData != 0x00) {
+        if(AP_GetNotifyCCCD(0)) {
+            OutValue("\n\rNotify Bump Sensor=",bumpSensorData);
+            AP_SendNotification(0);
+            bumpSensorData = 0x00;
+        }
+    }
+}
 /*********************************
  *      MAIN FUNCTION
  *********************************/
 
 void main(void){
-    int time=0;
     DisableInterrupts();
 
     Clock_Init48MHz();
@@ -164,28 +185,13 @@ void main(void){
 
     int bindex = 0;
     while(1){
-        time++;
-        AP_BackgroundProcess();  // handle incoming SNP frames
-        if(time>1000000){
-          time = 0;
-          if(AP_GetNotifyCCCD(1)) {
-              OutValue("\n\rNotify Line Sensor=",reading);
-              AP_SendNotification(1);
-          }
-        }
-        if(bumpSensorData != 0x00) {
-            if(AP_GetNotifyCCCD(0)) {
-                OutValue("\n\rNotify Bump Sensor=",bumpSensorData);
-                AP_SendNotification(0);
-                bumpSensorData = 0x00;
-            }
-        }
-        if(controlState) {
-            Motor_DutyLeft(PERIOD * globalSpeed);      //Drive Left Motor
-            Motor_DutyRight(PERIOD * globalSpeed);    //Drive Right Motor
-            Clock_Delay1ms(10);     // wait
+        SendBluetoothData();
 
-            //ROM Debug code
+        if(controlState) {
+            //Traverse Maze
+            DriveController();
+
+            // ROM Debug
             buffer[bindex]= reading; // adds line reading to buffer
             if(bindex<256*2)
                 bindex++; // increments index
@@ -197,4 +203,13 @@ void main(void){
         }
     }
 
+}
+
+void Drive_Controller(void) {
+    ////////////////////////
+    // Drive Controller
+    ////////////////////////
+    Motor_DutyLeft(PERIOD * globalSpeed);      //Drive Left Motor
+    Motor_DutyRight(PERIOD * globalSpeed);    //Drive Right Motor
+    Clock_Delay1ms(10);     // wait
 }
