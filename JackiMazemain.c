@@ -89,7 +89,7 @@ void SysTick_Handler(void){ // every 1ms
 /*********************************
  *      ULTRASONIC SENSORS
  *********************************/
-double Left_mm,Right_mm,Center_mm; // IR distances in mm
+uint32_t Left_mm,Right_mm,Center_mm; // IR distances in mm
 #define OPEN_DIST_L 250
 #define OPEN_DIST_R 250
 #define OPEN_DIST_C 250
