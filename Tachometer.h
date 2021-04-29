@@ -5,7 +5,7 @@
 #ifndef TACHOMETER_H_
 #define TACHOMETER_H_
 
-#include <stdint>
+#include <stdint.h>
 
 enum TachDirection{
   FORWARD, /**< Wheel is making robot move forward */
@@ -21,6 +21,7 @@ double get_velocity_right();
 uint16_t getLeftPeriod();
 uint16_t getRightPeriod();
 
+void turnBoth(int);
 void turnLeft(int);
 void turnRight(int);
 
