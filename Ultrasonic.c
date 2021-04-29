@@ -143,6 +143,7 @@ uint32_t readLeft()
     {
         duration++;
         result = P10->IN & 0x02;
+        Clock_Delay1us(1);
     }
     EnableInterrupts();
     return duration;
@@ -171,6 +172,7 @@ uint32_t readCenter()
     {
         duration++;
         result = P8->IN & 0x01;
+        Clock_Delay1us(1);
     }
     EnableInterrupts();
     return duration;
@@ -199,6 +201,7 @@ uint32_t readRight()
     {
         duration++;
         result = P8->IN & 0x10;
+        Clock_Delay1us(1);
     }
     EnableInterrupts();
     return duration;
