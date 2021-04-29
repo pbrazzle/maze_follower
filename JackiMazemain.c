@@ -92,10 +92,9 @@ void SysTick_Handler(void){ // every 1ms
 void Lines_Found(void){
     
     if(reading!=0 && reading!=255) {
-    int count=0;
     MazeStop();
     LaunchPad_Output(BLUE);
-        while(count<5){  
+        while(1){  
         LaunchPad_LED(1);
         Clock_Delay1us(50000);
         LaunchPad_LED(0);
