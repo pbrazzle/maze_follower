@@ -50,8 +50,7 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include "../inc/UART0.h"
 #include "../inc/Bump.h"
 #include "../inc/Reflectance.h"
-#include "../inc/Motor.h"
-#include "../inc/MotorSimple.h"
+#include "../inc/Motors.h"
 #include "../inc/Tachometer.h"
 #include "../inc/TimerA1.h"
 #include "../inc/TA3InputCapture.h"
@@ -67,41 +66,23 @@ policies, either expressed or implied, of the FreeBSD Project.
 volatile uint32_t nr,nc,nl;
 volatile uint32_t ADCflag; // Set every 500us on ADC sample
 volatile uint32_t ControllerFlag; // set every 10ms on controller execution
-int32_t UR, UL;  // PWM duty 0 to 14,998
+int16_t UR, UL;  // PWM duty 0 to 14,998
 double Left17,Center17,Right17; // IR distances in mm
 int32_t Mode=0; // 0 stop, 1 run
 int32_t Error;
 int32_t Ki=10;  // integral controller gain
 int32_t Kp=32;  // proportional controller gain
 
-void Ultrasampling(void){  // runs at 2000 Hz
-  //uint32_t raw17,raw14,raw16;
-  /*
-  ADC_In17_14_16(&raw17,&raw14,&raw16);  // sample
-  nr = LPF_Calc(raw17);  // right is channel 17 P9.0
-  nc = LPF_Calc2(raw14); // center is channel 14, P6.1
-  nl = LPF_Calc3(raw16); // left is channel 16, P9.1
-  Left17 = LeftConvert(nl);
-  Center17 = CenterConvert(nc);
-  Right17 = RightConvert(nr);
-  ADCflag = 1;           // semaphore
-  */
-  Left17 = readLeft() * 0.000001 * 343;
-  Center17 = readCenter() * 0.000001 * 343;
-  Right17 = readRight() * 0.000001 * 343;
-}
-
 #define TOOCLOSE 200
 #define DESIRED 250
 int32_t SetPoint = 250;
 #define TOOFAR 400
 
-int32_t PWMnominal=2500;
+int16_t PWMnominal=2500;
 #define SWING 1000
 #define PWMMIN (PWMnominal-SWING)
 #define PWMMAX (PWMnominal+SWING)
 void SysTick_Handler(void){ // runs at 100 Hz
-  if(Mode){
     if((Left17>DESIRED)&&(Right17>DESIRED)){
       SetPoint = (Left17+Right17)/2;
     }else{
@@ -119,9 +100,8 @@ void SysTick_Handler(void){ // runs at 100 Hz
     if(UR > (PWMnominal+SWING)) UR = PWMnominal+SWING;
     if(UL < (PWMnominal-SWING)) UL = PWMnominal-SWING; // 3,000 to 7,000
     if(UL > (PWMnominal+SWING)) UL = PWMnominal+SWING;
-    Motor_Forward(UL,UR);
-    ControllerFlag = 1;
-  }
+    Motor_DutyLeft(UL);
+    Motor_DutyRight(UR);
 }
 
 
@@ -135,21 +115,17 @@ void main(){//mainProportialControl(void){
   Clock_Init48MHz();
   LaunchPad_Init(); // built-in switches and LEDs
   Bump_Init();   // bump switches
-  TimerA1_Init(&Ultrasampling,250);    // 2000 Hz sampling
+  Ultrasonic_Init();
   Motor_Stop();
-  Mode = 0;
   UR = UL = PWMnominal; //initial power
-  ADCflag = ControllerFlag = 0; // semaphores
-
   SysTick_Init(480000,2); // 100 Hz
   EnableInterrupts();
-  while(1){
-    if(Bump_Read()){ // collision
-      Mode = 0;
-      Motor_Stop();
-    }
-    if(ControllerFlag){ // 100 Hz , not real time
-      ControllerFlag = 0;
-    }
+  Motor_Init(UL,UR);
+  Motor_Start();
+  while(1)
+  {
+     Left17 = readLeft() * 0.000001 * 343;
+     Center17 = readCenter() * 0.000001 * 343;
+     Right17 = readRight() * 0.000001 * 343;
   }
 }
