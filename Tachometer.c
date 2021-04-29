@@ -61,14 +61,20 @@ void TA3_N_IRQHandler(void){
 
 void turnLeft(int degrees)
 {
-	leftDegrees = degrees;
+	leftDegrees = degrees - 25;
 	while(leftDegrees);
 }
 
 void turnRight(int degrees)
 {
-	rightDegrees = degrees;
+	rightDegrees = degrees - 25;
 	while(rightDegrees);
+}
+
+void turnBoth(int degrees)
+{
+    leftDegrees = rightDegrees = degrees - 25;
+    while(leftDegrees || rightDegrees);
 }
 
 uint16_t getLeftPeriod()
