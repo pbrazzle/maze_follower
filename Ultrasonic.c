@@ -17,43 +17,23 @@ void Ultrasonic_Init(void){
     P8->DIR &= ~0x10;
 
     //Center sensor
-    //P8.0 echo 7.5 trigger
-    P8->DIR &= ~0x01;
-    P7->DIR |= 0x20;
+    //P10.3 echo 10.4 trigger
+    P10->DIR &= ~0x08;
+    P10->DIR |= 0x10;
 
     //Left sensor
     //P10.0 trigger 10.1 echo
     P10->DIR |= 0x01;
     P10->DIR &= ~0x02;
 
-    P6->DIR &= ~BIT7;
-    P8->DIR &= ~BIT0;
-    P10->DIR &= ~BIT5;
-    P6->REN |= BIT7;
-    P8->REN |= BIT0;
-    P10->REN |= BIT5;
-    P6->OUT &= ~BIT7;
-    P8->OUT &= ~BIT0;
-    P10->OUT &= ~BIT5;
-
-    P6->SEL0 = 0;
-    P6->SEL1 = 0;
     P8->SEL0 = 0;
     P8->SEL1 = 0;
     P10->SEL0 = 0;
     P10->SEL1 = 0;
 
-    P6->IFG = 0;
     P8->IFG = 0;
     P10->IFG = 0;
 
-    P6->IE |= BIT7;
-    P8->IE |= BIT0;
-    P10->IE |= BIT5;
-
-    P6->IES &= ~BIT7;
-    P8->IES &= ~BIT0;
-    P10->IES &= ~BIT5;
 }
 
 void Ultrasonic_Start(void){
@@ -143,7 +123,6 @@ uint32_t readLeft()
     {
         duration++;
         result = P10->IN & 0x02;
-        Clock_Delay1us(1);
     }
     EnableInterrupts();
     return duration;
@@ -154,15 +133,15 @@ uint32_t readCenter()
     DisableInterrupts();
     uint32_t to=0;
     //Send pulse
-    P7->OUT |= 0x20;
+    P10->OUT |= 0x10;
     Clock_Delay1us(10);
-    P7->OUT &= ~0x20;
+    P10->OUT &= ~0x10;
 
     //Wait for echo in
-    uint8_t result = P8->IN & 0x01;
+    uint8_t result = P10->IN & 0x08;
     while (result == 0 && to != 100000)
        {
-           result = P8->IN & 0x01;
+           result = P10->IN & 0x08;
            to++;
        }
 
@@ -171,8 +150,7 @@ uint32_t readCenter()
     while (result != 0)
     {
         duration++;
-        result = P8->IN & 0x01;
-        Clock_Delay1us(1);
+        result = P10->IN & 0x08;
     }
     EnableInterrupts();
     return duration;
@@ -201,7 +179,6 @@ uint32_t readRight()
     {
         duration++;
         result = P8->IN & 0x10;
-        Clock_Delay1us(1);
     }
     EnableInterrupts();
     return duration;
