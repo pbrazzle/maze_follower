@@ -81,10 +81,10 @@ void SysTick_Handler(void){ // runs at 100 Hz
     }else{
       SetPoint = DESIRED;
     }
-    if(Left17 < Right17 ){
-      Error = Left17-SetPoint;
+    if(Left17 > Right17 ){
+      Error = Right17-SetPoint;
     }else{
-      Error = SetPoint-Right17;
+      Error = SetPoint-Left17;
     }
  //   UR = UR + Ki*Error;      // adjust right motor
     UR = PWMnominal+Kp*Error; // proportional control
