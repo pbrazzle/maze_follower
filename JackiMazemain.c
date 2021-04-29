@@ -31,12 +31,13 @@
 #include "../inc/PWM.h"
 #include "../inc/Reflectance.h"
 #include "../inc/SysTickInts.h"
+#include "../inc/Tachometer.h"
+#include "../inc/TA3InputCapture.h"
 #include "../inc/TExaS.h"
 #include "../inc/TimerA1.h"
 #include "../inc/UART0.h"
+#include "Ultrasonic.h"
 
-uint32_t Input;
-uint32_t Output;
 float globalSpeed = 0.40;
 
 uint8_t buffer[256*2]; //Debug buffer
@@ -44,17 +45,6 @@ uint8_t buffer[256*2]; //Debug buffer
 uint8_t controlState;
 uint8_t bumpSensorData;
 uint8_t reading;
-
-// Motor interface, see Motor.c
-// IR sensor interface, see IRdistance.c
-// bump sensor interface, see Bump.c
-// Nokia interface, see Nokia5110.c
-void OutValue(char *label,uint32_t value){
-  UART0_OutString(label);
-  UART0_OutUHex(value);
-}
-
-
 
 /*********************************
  *      START / STOP CONTROL
@@ -95,9 +85,25 @@ void SysTick_Handler(void){ // every 1ms
 }
 
 /*********************************
+ *      ULTRASONIC SENSORS
+ *********************************/
+double Left_mm,Right_mm,Center_mm; // IR distances in mm
+#define OPEN_DIST_L 1000
+#define OPEN_DIST_R 1000
+#define OPEN_DIST_C 1000
+void PingUltrasonicSensors() {
+    Left_mm = readLeft() * 0.001 * 343;
+    Center_mm = readCenter() * 0.001 * 343;
+    Right_mm = readRight() * 0.001 * 343;
+}
+
+/*********************************
  *      BLUETOOOTH FUNCTIONS
  *********************************/
-
+void OutValue(char *label,uint32_t value){
+  UART0_OutString(label);
+  UART0_OutUHex(value);
+}
 void ReadControlState(void) {
     OutValue("\n\rRead Control State=",controlState);
 }
@@ -156,6 +162,76 @@ void SendBluetoothData(void) {
         }
     }
 }
+
+/*********************************
+ *      PWM FUNTIONS
+ *********************************/
+int16_t UR, UL;  // PWM duty 0 to 14,998
+int32_t Error;
+int32_t Ki=10;  // integral controller gain
+int32_t Kp=32;  // proportional controller gain
+
+#define TOOCLOSE 200
+#define DESIRED 250
+int32_t SetPoint = 250;
+#define TOOFAR 400
+
+int16_t PWMnominal=2500;
+#define SWING 1000
+#define PWMMIN (PWMnominal-SWING)
+#define PWMMAX (PWMnominal+SWING)
+void PWM_Motor_Drive(void){ // runs at 100 Hz
+    if((Left_mm>DESIRED)&&(Right_mm>DESIRED)){
+      SetPoint = (Left_mm+Right_mm)/2;
+    }else{
+      SetPoint = DESIRED;
+    }
+    if(Left_mm < Right_mm ){
+      Error = Left_mm-SetPoint;
+    }else{
+      Error = SetPoint-Right_mm;
+    }
+ //   UR = UR + Ki*Error;      // adjust right motor
+    UR = PWMnominal+Kp*Error; // proportional control
+    UL = PWMnominal-Kp*Error; // proportional control
+    if(UR < (PWMnominal-SWING)) UR = PWMnominal-SWING; // 3,000 to 7,000
+    if(UR > (PWMnominal+SWING)) UR = PWMnominal+SWING;
+    if(UL < (PWMnominal-SWING)) UL = PWMnominal-SWING; // 3,000 to 7,000
+    if(UL > (PWMnominal+SWING)) UL = PWMnominal+SWING;
+    Motor_DutyLeft(UL);
+    Motor_DutyRight(UR);
+}
+
+/*********************************
+ *      DRIVE CONTROLLER
+ *********************************/
+void DriveController(void) {
+    if(Right_mm > OPEN_DIST_R) {
+        //Turn Right
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(0);                     //Drive Right Motor
+        Clock_Delay1ms(10);     // wait
+    }
+    else if(Center_mm > OPEN_DIST_C) {
+        //Go Forward
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
+        Clock_Delay1ms(10);     // wait
+    }
+    else if(Left_mm > OPEN_DIST_L) {
+        //Turn Left
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(0);                     //Drive Right Motor
+        Clock_Delay1ms(10);     // wait
+    }
+    else {
+        //Turn Around
+        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
+        Motor_DutyRight(0);                     //Drive Right Motor
+        Clock_Delay1ms(10);     // wait
+    }
+}
+
 /*********************************
  *      MAIN FUNCTION
  *********************************/
@@ -167,8 +243,10 @@ void main(void){
     UART0_Init();
     LaunchPad_Init();  // input from switches, output to LEDs on LaunchPad
     Reflectance_Init();
+    Ultrasonic_Init();
+    UR = UL = PWMnominal; //initial power
+    Motor_Init(0,0);
     SysTick_Init(48000,2);
-    Motor_Init(0, 0);
     BumpInt_Init(&HandleCollision);
     EnableInterrupts();
 
@@ -186,6 +264,7 @@ void main(void){
     int bindex = 0;
     while(1){
         SendBluetoothData();
+        PingUltrasonicSensors();
 
         if(controlState) {
             //Traverse Maze
@@ -203,13 +282,4 @@ void main(void){
         }
     }
 
-}
-
-void Drive_Controller(void) {
-    ////////////////////////
-    // Drive Controller
-    ////////////////////////
-    Motor_DutyLeft(PERIOD * globalSpeed);      //Drive Left Motor
-    Motor_DutyRight(PERIOD * globalSpeed);    //Drive Right Motor
-    Clock_Delay1ms(10);     // wait
 }
