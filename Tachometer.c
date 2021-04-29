@@ -61,13 +61,13 @@ void TA3_N_IRQHandler(void){
 
 void turnLeft(int degrees)
 {
-	leftDegrees = degrees - 25;
+	leftDegrees = degrees;
 	while(leftDegrees);
 }
 
 void turnRight(int degrees)
 {
-	rightDegrees = degrees - 25;
+	rightDegrees = degrees;
 	while(rightDegrees);
 }
 
