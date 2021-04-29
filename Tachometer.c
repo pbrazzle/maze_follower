@@ -5,6 +5,7 @@
 uint16_t firstRightTime, secondRightTime;
 uint16_t firstLeftTime, secondLeftTime;
 uint16_t leftPeriod, rightPeriod;
+uint16_t leftDegrees = 0, rightDegrees = 0;
 
 void Tachometer_Init(void){
   //right 10.4 left 5.2/10.5
@@ -35,6 +36,7 @@ void TA3_0_IRQHandler(void){
   secondRightTime = TIMER_A3->CCR[0];
   //rightPeriod = secondRightTime - firstRightTime;
   rightPeriod = firstRightTime - secondRightTime;
+  rightDegrees = (rightDegrees > 0) ? rightDegrees-1 : 0;
 }
 
 //Left tachometer interrupt
@@ -44,6 +46,19 @@ void TA3_N_IRQHandler(void){
   secondLeftTime = TIMER_A3->CCR[1];
   //leftPeriod = secondLeftTime - firstLeftTime;
   leftPeriod = firstLeftTime - secondLeftTime;
+  leftDegrees = (leftDegrees > 0) ? leftDegrees-1 : 0;
+}
+
+void turnLeft(int degrees)
+{
+	leftDegrees = degrees;
+	while(leftDegrees);
+}
+
+void turnRight(int degrees)
+{
+	rightDegrees = degrees;
+	while(rightDegrees);
 }
 
 uint16_t getLeftPeriod()

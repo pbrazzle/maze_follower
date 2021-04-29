@@ -21,4 +21,7 @@ double get_velocity_right();
 uint16_t getLeftPeriod();
 uint16_t getRightPeriod();
 
+void turnLeft(int);
+void turnRight(int);
+
 #endif
