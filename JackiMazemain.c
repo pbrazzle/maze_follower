@@ -46,6 +46,8 @@ uint8_t controlTurn;
 uint8_t bumpSensorData;
 uint8_t reading;
 
+#define YELLOW (RED | GREEN)
+
 /*********************************
  *      START / STOP CONTROL
  *********************************/
@@ -90,9 +92,6 @@ void SysTick_Handler(void){ // every 1ms
  *      ULTRASONIC SENSORS
  *********************************/
 double Left_mm,Right_mm,Center_mm; // IR distances in mm
-#define OPEN_DIST_L 250
-#define OPEN_DIST_R 250
-#define OPEN_DIST_C 250
 void PingUltrasonicSensors() {
     Left_mm = readLeft() * 0.001 * 343;
     Right_mm = readRight() * 0.001 * 343;
@@ -200,41 +199,57 @@ void PID_Motor_Drive(void){ // runs at 100 Hz
     if(UR > (PWMnominal+SWING)) UR = PWMnominal+SWING;
     if(UL < (PWMnominal-SWING)) UL = PWMnominal-SWING; // 3,000 to 7,000
     if(UL > (PWMnominal+SWING)) UL = PWMnominal+SWING;
-    Motor_DutyLeft(UL);
-    Motor_DutyRight(UR);
+    Motor_DutyLeft(UL * 0.5);
+    Motor_DutyRight(UR * 0.5);
 }
 
 /*********************************
  *      DRIVE CONTROLLER
  *********************************/
+uint8_t switchCount = 0;
+uint8_t switchMin = 50;
+uint8_t flipCount = 0;
+uint8_t flipMin = 50;
+#define OPEN_DIST_L 470
+#define OPEN_DIST_R 470
+#define OPEN_DIST_C 30
 void DriveController(void) {
-    if(Right_mm > OPEN_DIST_R) {
+    if(Right_mm > OPEN_DIST_R && switchCount > switchMin && Right_mm > Left_mm + 100 && 0) {
         //Turn Right
+        flipCount = 0;
+        switchCount = 0;
+        if(controlState == 0x01) LaunchPad_Output(YELLOW);
         controlTurn = 0x01;
         //Forward 360
         Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
         Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
-        turnBoth(360);
+        turnBoth(280);
         //Pivot 90 Right
         Motor_DutyLeft(-PERIOD * globalSpeed);   //Drive Left Motor
         Motor_DutyRight(PERIOD * globalSpeed); //Drive Right Motor
         turnBoth(180);
         //Forward 360
         Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
-        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
-        turnBoth(200);
+        Motor_DutyRight(PERIOD * globalSpeed-100);  //Drive Right Motor
+        turnBoth(280);
 
     }
-    else if(Center_mm > OPEN_DIST_C) {
+    else if(Center_mm > OPEN_DIST_C || Center_mm == 0 || 1) {
+        flipCount = 0;
+        switchCount++;
         //Go Forward
+        if(controlState == 0x01) LaunchPad_Output(GREEN);
         controlTurn = 0x00;
 //        Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
 //        Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
 //        Clock_Delay1ms(10);     // wait
         PID_Motor_Drive();
     }
-    else if(Left_mm > OPEN_DIST_L) {
+    else if(Left_mm > OPEN_DIST_L && switchCount > switchMin && Left_mm > Right_mm + 100) {
         //Turn Left
+        flipCount = 0;
+        switchCount = 0;
+        if(controlState == 0x01) LaunchPad_Output(YELLOW);
         controlTurn = 0x02;
         //Forward 360
         Motor_DutyLeft(PERIOD * globalSpeed);   //Drive Left Motor
@@ -249,13 +264,19 @@ void DriveController(void) {
         Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
         turnBoth(200);
     }
-    else {
+    else if(switchCount > switchMin && flipCount > flipMin) {
+        flipCount = 0;
+        switchCount = 0;
         //Turn Around
+        if(controlState == 0x01) LaunchPad_Output(YELLOW);
         controlTurn = 0x03;
         //Pivot 360 Right
         Motor_DutyLeft(-PERIOD * globalSpeed);  //Drive Left Motor
         Motor_DutyRight(PERIOD * globalSpeed);  //Drive Right Motor
         turnBoth(360);
+    }
+    else {
+        flipCount++;
     }
 }
 

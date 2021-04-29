@@ -61,25 +61,21 @@ void TA3_N_IRQHandler(void){
 
 void turnLeft(int degrees)
 {
-	leftDegrees = degrees - 25;
-	//Wait until leftDegrees hits 0 or motor has been stopped/slept
-	while(leftDegrees && TIMER_A0->CCR[4] != 0 && (P3->IN & 0x8));
+    leftDegrees = degrees - 25;
+    //Wait until leftDegrees hits 0 or motor has been stopped/slept
+    while(leftDegrees && TIMER_A0->CCR[4] != 0 && (P3->IN & 0x8));
 }
 
 void turnRight(int degrees)
 {
-	rightDegrees = degrees - 25;
-	while(rightDegrees && TIMER_A0->CCR[3] != 0 && (P3->IN & 0x2));
+    rightDegrees = degrees - 25;
+    while(rightDegrees && TIMER_A0->CCR[3] != 0 && (P3->IN & 0x2));
 }
 
 void turnBoth(int degrees)
 {
     leftDegrees = rightDegrees = degrees - 25;
-    while(leftDegrees || rightDegrees)
-	{
-		if (TIMER_A0->CCR[3] == 0 || !(P3->IN & 0x2)) break;
-		if (TIMER_A0->CCR[4] == 0 || !(P3->IN & 0x8)) break;
-	}
+    while((leftDegrees && TIMER_A0->CCR[4] != 0 && (P3->OUT & 0xC0)) || (rightDegrees && TIMER_A0->CCR[3] != 0 && (P3->OUT & 0xC0)));
 }
 
 uint16_t getLeftPeriod()
@@ -94,14 +90,14 @@ uint16_t getRightPeriod()
 
 double get_velocity_left()
 {
-	double vel = (leftPeriod) * 0.083 * 0.001 * 18 / 11;
-	if (!leftForward) vel = -vel;
+    double vel = (leftPeriod) * 0.083 * 0.001 * 18 / 11;
+    if (!leftForward) vel = -vel;
     return vel;
 }
 
 double get_velocity_right()
 {
-	double vel = (rightPeriod) * 0.083 * 0.001 * 18 / 11;
-	if (!rightForward) vel = -vel;
+    double vel = (rightPeriod) * 0.083 * 0.001 * 18 / 11;
+    if (!rightForward) vel = -vel;
     return vel;
 }
