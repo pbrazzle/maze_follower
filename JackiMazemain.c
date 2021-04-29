@@ -87,6 +87,23 @@ void SysTick_Handler(void){ // every 1ms
 }
 
 /*********************************
+ *      FOUND LINES
+ *********************************/
+void Lines_Found(void){
+    
+    if(reading!=0 && reading!=255) {
+    int count=0;
+    MazeStop();
+    LaunchPad_Output(BLUE);
+        while(count<5){  
+        LaunchPad_LED(1);
+        Clock_Delay1us(50000);
+        LaunchPad_LED(0);
+        Clock_Delay1us(50000);
+        }
+    }        
+} 
+/*********************************
  *      ULTRASONIC SENSORS
  *********************************/
 uint32_t Left_mm,Right_mm,Center_mm; // IR distances in mm
