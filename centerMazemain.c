@@ -1,6 +1,5 @@
 /*
- * Lab17.c
-   Lab 17 solution, Distance to wall proportional control
+ * Distance to wall proportional control
  *  Created on: June 20, 2018
  *      Authors: Jonathan Valvano and Daniel Valvano
  *  Modified: August 18, 2018
@@ -40,7 +39,6 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include <stdint.h>
 #include <stdio.h>
 #include "msp.h"
-#include "blinker.h"
 #include "../inc/Clock.h"
 #include "../inc/CortexM.h"
 #include "../inc/PWM.h"
@@ -56,19 +54,14 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include "../inc/TA3InputCapture.h"
 #include "../inc/SysTickInts.h"
 #include "../inc/ADC14.h"
-#include "../inc/SSD1306.h"
 #include "Ultrasonic.h"
 
 
 //******************************************************
 
 
-volatile uint32_t nr,nc,nl;
-volatile uint32_t ADCflag; // Set every 500us on ADC sample
-volatile uint32_t ControllerFlag; // set every 10ms on controller execution
 int16_t UR, UL;  // PWM duty 0 to 14,998
 double Left17,Center17,Right17; // IR distances in mm
-int32_t Mode=0; // 0 stop, 1 run
 int32_t Error;
 int32_t Ki=10;  // integral controller gain
 int32_t Kp=32;  // proportional controller gain
@@ -106,9 +99,7 @@ void SysTick_Handler(void){ // runs at 100 Hz
 
 
 // *******************************************************************
-// main17.c
-// Lab 17 solution with proportional control, distance to wall
-// Enumerated parameter "NONE", "LCD", "UART" or "OLED"
+// solution with proportional control, distance to wall
 // Runs on MSP432
 void main(){//mainProportialControl(void){
   DisableInterrupts();
