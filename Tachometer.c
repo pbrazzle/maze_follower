@@ -62,19 +62,24 @@ void TA3_N_IRQHandler(void){
 void turnLeft(int degrees)
 {
 	leftDegrees = degrees - 25;
-	while(leftDegrees);
+	//Wait until leftDegrees hits 0 or motor has been stopped/slept
+	while(leftDegrees && TIMER_A0->CCR[4] != 0 && (P3->IN & 0x8));
 }
 
 void turnRight(int degrees)
 {
 	rightDegrees = degrees - 25;
-	while(rightDegrees);
+	while(rightDegrees && TIMER_A0->CCR[3] != 0 && (P3->IN & 0x2));
 }
 
 void turnBoth(int degrees)
 {
     leftDegrees = rightDegrees = degrees - 25;
-    while(leftDegrees || rightDegrees);
+    while(leftDegrees || rightDegrees)
+	{
+		if (TIMER_A0->CCR[3] == 0 || !(P3->IN & 0x2)) break;
+		if (TIMER_A0->CCR[4] == 0 || !(P3->IN & 0x8)) break;
+	}
 }
 
 uint16_t getLeftPeriod()
