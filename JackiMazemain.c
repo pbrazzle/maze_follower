@@ -276,8 +276,8 @@ uint8_t leftRunning = 0;
 uint8_t switchCount = 0;
 uint8_t switchMin = 100;
 uint8_t flipCount = 0;
-uint8_t flipMin = 50;
-#define OPEN_DIST_L 400
+uint8_t flipMin = 5;
+#define OPEN_DIST_L 500
 #define OPEN_DIST_R 400
 #define OPEN_DIST_C 100
 void DriveController(void) {
